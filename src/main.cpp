@@ -29,10 +29,15 @@ bool isProcessRunning(const wchar_t* exeName) {
     PROCESSENTRY32W pe;
     pe.dwSize = sizeof(pe);
 
+    // Extract filename from path
+    const wchar_t* exeFileName = exeName;
+    const wchar_t* lastSlash = wcsrchr(exeName, L'\\');
+    if (lastSlash) exeFileName = lastSlash + 1;
+
     bool found = false;
     if (Process32FirstW(hSnapshot, &pe)) {
         do {
-            if (_wcsicmp(pe.szExeFile, exeName) == 0) {
+            if (_wcsicmp(pe.szExeFile, exeFileName) == 0) {
                 found = true;
                 break;
             }
@@ -50,10 +55,15 @@ bool terminateProcessByName(const wchar_t* exeName) {
     PROCESSENTRY32W pe;
     pe.dwSize = sizeof(pe);
 
+    // Extract filename from path
+    const wchar_t* exeFileName = exeName;
+    const wchar_t* lastSlash = wcsrchr(exeName, L'\\');
+    if (lastSlash) exeFileName = lastSlash + 1;
+
     bool terminated = false;
     if (Process32FirstW(hSnapshot, &pe)) {
         do {
-            if (_wcsicmp(pe.szExeFile, exeName) == 0) {
+            if (_wcsicmp(pe.szExeFile, exeFileName) == 0) {
                 HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pe.th32ProcessID);
                 if (hProcess) {
                     TerminateProcess(hProcess, 0);
@@ -102,6 +112,8 @@ std::wstring getStatusLabel(const std::wstring& appName, const wchar_t* exeName)
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     if (message == WM_TRAYICON) {
         if (lParam == WM_RBUTTONUP) {
+            // Add a small delay to allow process status to update
+            Sleep(200);
             HMENU menu = CreatePopupMenu();
 
             AppendMenu(menu, MF_STRING, ID_APP_KOMOREBI, getStatusLabel(L"Komorebi", appMap[ID_APP_KOMOREBI].c_str()).c_str());
@@ -120,6 +132,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
         int cmd = LOWORD(wParam);
         if (appMap.count(cmd)) {
             toggleApp(appMap[cmd].c_str());
+            // Optionally, force menu to close and user to reopen for updated status
+            // SetForegroundWindow(hWnd);
         } else if (cmd == ID_TRAY_EXIT) {
             Shell_NotifyIcon(NIM_DELETE, &nid);
             PostQuitMessage(0);
@@ -138,7 +152,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     wc.lpfnWndProc = WndProc;
     wc.hInstance = hInstance;
     wc.lpszClassName = CLASS_NAME;
-    wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+    wc.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(ID_TRAY_APP_ICON));
     RegisterClass(&wc);
 
     hwnd = CreateWindowExW(0, CLASS_NAME, L"HiddenWindow", 0, 0, 0, 0, 0, NULL, NULL, hInstance, NULL);
@@ -148,7 +162,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     nid.uID = ID_TRAY_APP_ICON;
     nid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
     nid.uCallbackMessage = WM_TRAYICON;
-    nid.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+    nid.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(ID_TRAY_APP_ICON));
     lstrcpy(nid.szTip, TEXT("uTray"));
 
     Shell_NotifyIcon(NIM_ADD, &nid);

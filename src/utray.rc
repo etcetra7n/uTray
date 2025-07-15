@@ -12,7 +12,7 @@ FILETYPE 0x1
         BLOCK "040904b0"
         {
             VALUE "CompanyName", "etcetra7n"
-            VALUE "FileDescription", "uTray Toggler"
+            VALUE "FileDescription", "uTray"
             VALUE "FileVersion", "4.2.6.0"
             VALUE "ProductName", "uTray"
             VALUE "OriginalFilename", "uTray.exe"
