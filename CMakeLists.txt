@@ -29,6 +29,7 @@ target_link_libraries(uTray
     shell32
     gdi32
     dwmapi
+    shlwapi
 )
 
 set_target_properties(uTray PROPERTIES

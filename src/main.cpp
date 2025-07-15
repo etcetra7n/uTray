@@ -6,6 +6,7 @@
 #include <tlhelp32.h>
 #include <map>
 #include <string>
+#include <shlwapi.h>
 
 #define WM_TRAYICON (WM_USER + 1)
 #define ID_TRAY_APP_ICON 101
@@ -86,6 +87,11 @@ void toggleApp(const wchar_t* exeName) {
         si.dwFlags = STARTF_USESHOWWINDOW;
         si.wShowWindow = SW_HIDE;
 
+        // Get parent directory using PathRemoveFileSpec
+        wchar_t dirBuffer[MAX_PATH];
+        lstrcpyW(dirBuffer, exeName);
+        PathRemoveFileSpecW(dirBuffer);
+
         PROCESS_INFORMATION pi;
         CreateProcessW(
             NULL,
@@ -95,7 +101,7 @@ void toggleApp(const wchar_t* exeName) {
             FALSE,
             CREATE_NO_WINDOW,
             NULL,
-            NULL,
+            dirBuffer,
             &si,
             &pi
         );
