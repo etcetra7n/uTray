@@ -117,17 +117,24 @@ std::wstring getStatusLabel(const std::wstring& appName, const wchar_t* exeName)
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     if (message == WM_TRAYICON) {
-        if (lParam == WM_RBUTTONUP) {
-            // Add a small delay to allow process status to update
-            Sleep(200);
+        if (lParam == WM_LBUTTONUP) {
+            // Show app toggles menu on left click
+            Sleep(150);
             HMENU menu = CreatePopupMenu();
-
             AppendMenu(menu, MF_STRING, ID_APP_KOMOREBI, getStatusLabel(L"Komorebi", appMap[ID_APP_KOMOREBI].c_str()).c_str());
             AppendMenu(menu, MF_STRING, ID_APP_GOTIFY, getStatusLabel(L"Gotify", appMap[ID_APP_GOTIFY].c_str()).c_str());
             AppendMenu(menu, MF_STRING, ID_APP_PLEX, getStatusLabel(L"Plex", appMap[ID_APP_PLEX].c_str()).c_str());
-            AppendMenu(menu, MF_SEPARATOR, 0, NULL);
+            // No Exit button on left click
+            POINT pt;
+            GetCursorPos(&pt);
+            SetForegroundWindow(hWnd);
+            TrackPopupMenu(menu, TPM_BOTTOMALIGN | TPM_LEFTALIGN, pt.x, pt.y, 0, hWnd, NULL);
+            DestroyMenu(menu);
+        } else if (lParam == WM_RBUTTONUP) {
+            // Show only Exit button on right click
+            Sleep(100);
+            HMENU menu = CreatePopupMenu();
             AppendMenu(menu, MF_STRING, ID_TRAY_EXIT, TEXT("Exit"));
-
             POINT pt;
             GetCursorPos(&pt);
             SetForegroundWindow(hWnd);
